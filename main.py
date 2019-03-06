@@ -3,16 +3,17 @@ class Image:
     def __init__(self, filename):
         with open(filename, 'r') as f:
             img = f.read()
-            rows = img.split('\n')
+            rows = img.strip().split('\n')
             image = []
             for row in rows:
-                for el in row.strip().split(' '):
-                    image.append(el)
+                for el in row.split(' '):
+                    if el:
+                        image.append(el)
             self.pixels = []
             self.type = image[0]
             self.width = int(image[1])
             self.height = int(image[2])
-            self.intens = image[3]
+            self.intens = int(image[3])
             self.get_pixels(image[4:])
             self.counter = 0
 
@@ -67,21 +68,28 @@ class Image:
                         f.write(str(self.pixels['b'][i][j]) + " ")
                     f.write("\n")
 
+    def _norm(self, pix):
+        if pix > self.intens:
+            return self.intens
+        elif pix < 0:
+            return 0
+        else:
+            return pix
+
     def _conv_pixel(self, m1, m2):
         res = 0
         div = 0
         for k in m2:
             for m in k:
                 div += m
-        if div == 0:
-            div = 1
-        else:
-            div = abs(div)
         for i in range(len(m1)):
             for j in range(len(m1[0])):
                 res += m1[i][j]*m2[i][j]
-        self.counter+=1
-        return int(res/div)
+        self.counter += 1
+        if div == 0:
+            return self._norm(res)
+        else:
+            return self._norm(int(res/div))
 
     # def _exp(self, coresize):
     #     size = int(coresize/2)
@@ -99,13 +107,13 @@ class Image:
     def change(self, pixels, core):
         new_pixels = []
         img = pixels #self._exp(core.size)
-        for i in range(len(img)-core.size+1):
+        for i in range(int(core.size/2), len(img)-int(core.size/2)):
             new_pixel_row = []
-            for j in range(len(img[0])-core.size+1):
+            for j in range(int(core.size/2), len(img[0])-int(core.size/2)):
                 matrix = []
-                rows = img[i:i+core.size]
+                rows = img[i-int(core.size/2):i+int(core.size/2)+1]
                 for row in rows:
-                    matrix.append(row[j:j+core.size])
+                    matrix.append(row[j-int(core.size/2):j+int(core.size/2)+1])
                 new_pixel_row.append(self._conv_pixel(matrix, core.matrix))
             new_pixels.append(new_pixel_row)
         self.height = len(new_pixels)
