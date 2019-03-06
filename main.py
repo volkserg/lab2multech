@@ -4,46 +4,40 @@ class Image:
         with open(filename, 'r') as f:
             img = f.read()
             rows = img.split('\n')
-            rows.pop()
+            image = []
+            for row in rows:
+                for el in row.strip().split(' '):
+                    image.append(el)
             self.pixels = []
-            self.type = rows.pop(0)
-            self.width = int(rows[0].split(' ')[0])
-            self.height = int(rows[0].split(' ')[1])
-            rows.pop(0)
-            self.intens = rows[0]
-            rows.pop(0)
-            self.get_pixels(rows)
+            self.type = image[0]
+            self.width = int(image[1])
+            self.height = int(image[2])
+            self.intens = image[3]
+            self.get_pixels(image[4:])
+            self.counter = 0
 
-    def get_pixels(self, rows):
+    def get_pixels(self, pixels):
         if self.type=='P2':
             q = 0
             self.pixels = []
-            pixels = []
-            for i in rows:
-                current_row = i.strip().split(' ')
-                if current_row[len(current_row)-1] == '':
-                    current_row.pop()
-                for j in current_row:
-                    pixels.append(int(j))
             for i in range(self.height):
                 temp_row = []
                 for j in range(self.width):
-                    temp_row.append(pixels[q])
+                    temp_row.append(int(pixels[q]))
                     q += 1
                 self.pixels.append(temp_row)
 
         if self.type == 'P3':
+            q = 0
             self.pixels = {}
             r, g, b = [], [], []
-            for i in rows:
+            for i in range(self.height):
                 r_row, g_row, b_row = [], [], []
-                current_row = i.split(' ')
-                for j in range(0, len(current_row), 3):
-                    r_row.append(int(current_row[j]))
-                for j in range(1, len(current_row), 3):
-                    g_row.append(int(current_row[j]))
-                for j in range(2, len(current_row), 3):
-                    b_row.append(int(current_row[j]))
+                for j in range(self.width):
+                    r_row.append(int(pixels[q]))
+                    g_row.append(int(pixels[q+1]))
+                    b_row.append(int(pixels[q+2]))
+                    q += 3
                 r.append(r_row)
                 g.append(g_row)
                 b.append(b_row)
@@ -75,11 +69,19 @@ class Image:
 
     def _conv_pixel(self, m1, m2):
         res = 0
-        # print(m1, m2)
+        div = 0
+        for k in m2:
+            for m in k:
+                div += m
+        if div == 0:
+            div = 1
+        else:
+            div = abs(div)
         for i in range(len(m1)):
             for j in range(len(m1[0])):
                 res += m1[i][j]*m2[i][j]
-        return res
+        self.counter+=1
+        return int(res/div)
 
     # def _exp(self, coresize):
     #     size = int(coresize/2)
@@ -106,13 +108,19 @@ class Image:
                     matrix.append(row[j:j+core.size])
                 new_pixel_row.append(self._conv_pixel(matrix, core.matrix))
             new_pixels.append(new_pixel_row)
+        self.height = len(new_pixels)
+        self.width = len(new_pixels[0])
         return new_pixels
 
     def make_filter(self, core):
         if self.type == 'P2':
             pixels = self.change(self.pixels, core)
-            for pix in pixels:
-                print(pix)
+            self.pixels = pixels
+        if self.type == 'P3':
+            self.pixels['r'] = self.change(self.pixels['r'], core)
+            self.pixels['g'] = self.change(self.pixels['g'], core)
+            self.pixels['b'] = self.change(self.pixels['b'], core)
+
 
 
 
